@@ -2,27 +2,28 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Model;
 
-class Tareas extends Authenticatable
+class Tareas extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
+    protected $table = 'tareas';
+
     protected $fillable = [
         'nombre',
         'descripcion',
         'estado',
         'usuario_id',
         'fecha_vencimiento',
+    ];
+
+    protected $casts = [
+        'fecha_vencimiento' => 'date',
     ];
 
 }
