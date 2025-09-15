@@ -19,6 +19,7 @@ class TareasController extends Controller
         $rows = DB::table('tareas as t')
             ->join('usuarios as u', 'u.id', '=', 't.usuario_id')
             ->select([
+                't.id',
                 't.nombre',
                 't.estado',
                 't.fecha_vencimiento',
