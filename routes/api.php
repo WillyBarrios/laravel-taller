@@ -16,27 +16,31 @@ use App\Http\Controllers\Api\TareasController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-// Rutas para el controlador de usuarios, asignando nombres personalizados
-
-Route::prefix('usuarios')->group(function () {
-    Route::get('/listUsers', [UsuarioController::class, 'index']);
-    Route::post('/addUser', [UsuarioController::class, 'store']);
-    Route::get('/getUser/{id}', [UsuarioController::class, 'show']);
-    Route::put('/updateUser/{id}', [UsuarioController::class, 'update']);
-    Route::delete('/deleteUser/{id}', [UsuarioController::class, 'destroy']);
-});
-
+// Login público (emite token)
 Route::post('/login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
-// Rutas para el controlador de tareas
-Route::prefix('tareas')->group(function () {
-    Route::get('/listTasks', [TareasController::class, 'index']);
-    Route::post('/addTask', [TareasController::class, 'store']);
-    Route::get('/getTask/{id}', [TareasController::class, 'show']);
-    Route::put('/updateTask/{id}', [TareasController::class, 'update']);
-    Route::delete('/deleteTask/{id}', [TareasController::class, 'destroy']);
+// Rutas protegidas con token Sanctum
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Rutas para el controlador de usuarios
+    Route::prefix('usuarios')->group(function () {
+        Route::get('/listUsers', [UsuarioController::class, 'index']);
+        Route::post('/addUser', [UsuarioController::class, 'store']);
+        Route::get('/getUser/{id}', [UsuarioController::class, 'show']);
+        Route::put('/updateUser/{id}', [UsuarioController::class, 'update']);
+        Route::delete('/deleteUser/{id}', [UsuarioController::class, 'destroy']);
+    });
+
+    // Rutas para el controlador de tareas
+    Route::prefix('tareas')->group(function () {
+        Route::get('/listTasks', [TareasController::class, 'index']);
+        Route::post('/addTask', [TareasController::class, 'store']);
+        Route::get('/getTask/{id}', [TareasController::class, 'show']);
+        Route::put('/updateTask/{id}', [TareasController::class, 'update']);
+        Route::delete('/deleteTask/{id}', [TareasController::class, 'destroy']);
+    });
 });

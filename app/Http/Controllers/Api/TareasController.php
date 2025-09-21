@@ -35,7 +35,6 @@ class TareasController extends Controller
      */
     public function create()
     {
-        // No se usa en API REST; utilizar store()
         return response()->json([
             'message' => 'Usa POST /api/tareas/addTask (store) para crear tareas',
         ], 405);
