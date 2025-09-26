@@ -24,4 +24,9 @@ class Kernel extends ConsoleKernel
 
         require base_path('routes/console.php');
     }
+    protected $commands = [
+        \App\Console\Commands\CreateTenant::class,
+        \App\Console\Commands\CreateTenantDatabase::class,
+        \App\Console\Commands\CreateTenantUser::class,
+    ];
 }

@@ -12,6 +12,10 @@ class Authenticate extends Middleware
      */
     protected function redirectTo(Request $request): ?string
     {
-        return $request->expectsJson() ? null : route('login');
+        // En esta API no existe una ruta nombrada 'login' para redirección web tradicional.
+        // Si es petición que espera JSON devolvemos null para que el middleware de Auth
+        // responda 401 sin intentar redirigir. Para cualquier otra petición también
+        // devolvemos null porque es un backend API + multi-tenant.
+        return null;
     }
 }
