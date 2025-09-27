@@ -16,8 +16,9 @@ use App\Http\Controllers\Api\TareasController;
 |
 */
 
-// Login público (emite token)
+// Rutas públicas (login & register) que emiten token en la BD central
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
 
 // Rutas protegidas con token Sanctum
 Route::middleware('auth:sanctum')->group(function () {

@@ -21,25 +21,28 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 |
 */
 
-// Simple landing to confirm tenancy context
-Route::middleware([
-    'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-])->group(function () {
-    Route::get('/', function () {
-        return 'Tenant context OK. Current tenant id: ' . tenant('id');
+// All tenant routes are constrained to subdomains like tenant2.localhost so they don't shadow central routes
+Route::domain('{tenant}.localhost')->group(function () {
+    // Simple landing to confirm tenancy context
+    Route::middleware([
+        'web',
+        InitializeTenancyByDomain::class,
+        PreventAccessFromCentralDomains::class,
+    ])->group(function () {
+        Route::get('/', function () {
+            return 'Tenant context OK. Current tenant id: ' . tenant('id');
+        });
     });
-});
 
-// Tenant-scoped API using tenant database
-Route::middleware([
-    'api',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-])->prefix('api')->group(function () {
+    // Tenant-scoped API using tenant database
+    Route::middleware([
+        'api',
+        InitializeTenancyByDomain::class,
+        PreventAccessFromCentralDomains::class,
+    ])->prefix('api')->group(function () {
     // Public login for this tenant (issues Sanctum token stored in tenant DB)
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register']);
 
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -62,6 +65,7 @@ Route::middleware([
             Route::get('/getTask/{id}', [TareasController::class, 'show']);
             Route::put('/updateTask/{id}', [TareasController::class, 'update']);
             Route::delete('/deleteTask/{id}', [TareasController::class, 'destroy']);
+        });
         });
     });
 });
