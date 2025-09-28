@@ -67,9 +67,15 @@ class UsuarioController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Usuario $user)
     {
-        //
+        return response()->json($user);
+    }
+
+    // Versión tenant: primer parámetro corresponde al subdominio {tenant}
+    public function showTenant($tenant, Usuario $user)
+    {
+        return response()->json($user);
     }
 
     /**
@@ -83,20 +89,33 @@ class UsuarioController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Usuario $user)
     {
-        $usuario = Usuario::findOrFail($id);
-
-        if ($usuario->rol !== 'admin') {
+        $db = \DB::connection()->getDatabaseName();
+        \Log::info('Update user attempt', [
+            'user_id' => $user->id,
+            'tenant_id' => tenant() ? tenant('id') : null,
+            'db' => $db,
+        ]);
+        // Autorización mediante policy: el usuario autenticado debe ser admin o el mismo usuario
+        // auth()->user() es el usuario que hace la petición (token Sanctum esperado)
+        if (!auth()->check()) {
             return response()->json([
-                'message' => 'Solo los usuarios con rol admin pueden ser actualizados.',
+                'message' => 'No autenticado',
                 'status' => false
-            ], 422);
+            ], 401);
+        }
+
+        if (!auth()->user()->can('update', $user)) {
+            return response()->json([
+                'message' => 'No autorizado para actualizar este usuario (se requiere rol admin o ser el mismo usuario).',
+                'status' => false
+            ], 403);
         }
 
         $validated = $request->validate([
             'nombre' => 'sometimes|required|string|max:150',
-            'email' => 'sometimes|required|email|max:150|unique:usuarios,email,' . $usuario->id,
+            'email' => 'sometimes|required|email|max:150|unique:usuarios,email,' . $user->id,
             'password' => 'nullable|string|min:6',
             'rol' => 'sometimes|required|string',
         ]);
@@ -114,11 +133,62 @@ class UsuarioController extends Controller
             unset($validated['password']); // no sobrescribir con null
         }
 
-        $usuario->update($validated);
+        $user->update($validated);
 
         return response()->json([
             'message' => 'Usuario actualizado correctamente',
-            'data' => $usuario
+            'data' => $user,
+        ], 200);
+    }
+
+    // Versión tenant: respeta orden (string $tenant, Usuario $user)
+    public function updateTenant($tenant, Request $request, Usuario $user)
+    {
+        $db = \DB::connection()->getDatabaseName();
+        \Log::info('Update user attempt (tenant)', [
+            'user_id' => $user->id,
+            'tenant_id' => tenant() ? tenant('id') : null,
+            'db' => $db,
+        ]);
+
+        if (!auth()->check()) {
+            return response()->json([
+                'message' => 'No autenticado',
+                'status' => false
+            ], 401);
+        }
+
+        if (!auth()->user()->can('update', $user)) {
+            return response()->json([
+                'message' => 'No autorizado para actualizar este usuario (se requiere rol admin o ser el mismo usuario).',
+                'status' => false
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'nombre' => 'sometimes|required|string|max:150',
+            'email' => 'sometimes|required|email|max:150|unique:usuarios,email,' . $user->id,
+            'password' => 'nullable|string|min:6',
+            'rol' => 'sometimes|required|string',
+        ]);
+
+        if (isset($validated['rol']) && !in_array($validated['rol'], ['admin', 'usuario'])) {
+            return response()->json([
+                'message' => 'El rol ingresado no es válido, debe ser "admin" o "usuario".'
+            ], 422);
+        }
+
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'Usuario actualizado correctamente',
+            'data' => $user,
         ], 200);
     }
 
@@ -126,8 +196,19 @@ class UsuarioController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Usuario $user)
     {
-        //
+        $user->delete();
+        return response()->json([
+            'message' => 'Usuario eliminado correctamente'
+        ], 200);
+    }
+
+    public function destroyTenant($tenant, Usuario $user)
+    {
+        $user->delete();
+        return response()->json([
+            'message' => 'Usuario eliminado correctamente'
+        ], 200);
     }
 }

@@ -16,32 +16,36 @@ use App\Http\Controllers\Api\TareasController;
 |
 */
 
-// Rutas públicas (login & register) que emiten token en la BD central
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
+// Restringir explícitamente las rutas centrales a los dominios centrales para que
+// no capturen requests de dominios tenant (tenant2.localhost, etc.).
+foreach (['localhost', '127.0.0.1'] as $centralDomain) {
+    Route::domain($centralDomain)->group(function () {
+        // Rutas públicas (login & register) que emiten token en la BD central
+        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/register', [AuthController::class, 'register']);
 
-// Rutas protegidas con token Sanctum
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
-    Route::post('/logout', [AuthController::class, 'logout']);
+        // Rutas protegidas con token Sanctum
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::get('/user', function (Request $request) {
+                return $request->user();
+            });
+            Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Rutas para el controlador de usuarios
-    Route::prefix('usuarios')->group(function () {
-        Route::get('/listUsers', [UsuarioController::class, 'index']);
-        Route::post('/addUser', [UsuarioController::class, 'store']);
-        Route::get('/getUser/{id}', [UsuarioController::class, 'show']);
-        Route::put('/updateUser/{id}', [UsuarioController::class, 'update']);
-        Route::delete('/deleteUser/{id}', [UsuarioController::class, 'destroy']);
-    });
+            Route::prefix('usuarios')->group(function () {
+                Route::get('/listUsers', [UsuarioController::class, 'index']);
+                Route::post('/addUser', [UsuarioController::class, 'store']);
+                Route::get('/getUser/{user}', [UsuarioController::class, 'show'])->whereNumber('user');
+                Route::put('/updateUser/{user}', [UsuarioController::class, 'update'])->whereNumber('user');
+                Route::delete('/deleteUser/{user}', [UsuarioController::class, 'destroy'])->whereNumber('user');
+            });
 
-    // Rutas para el controlador de tareas
-    Route::prefix('tareas')->group(function () {
-        Route::get('/listTasks', [TareasController::class, 'index']);
-        Route::post('/addTask', [TareasController::class, 'store']);
-        Route::get('/getTask/{id}', [TareasController::class, 'show']);
-        Route::put('/updateTask/{id}', [TareasController::class, 'update']);
-        Route::delete('/deleteTask/{id}', [TareasController::class, 'destroy']);
+            Route::prefix('tareas')->group(function () {
+                Route::get('/listTasks', [TareasController::class, 'index']);
+                Route::post('/addTask', [TareasController::class, 'store']);
+                Route::get('/getTask/{task}', [TareasController::class, 'showCentral'])->whereNumber('task');
+                Route::put('/updateTask/{task}', [TareasController::class, 'updateCentral'])->whereNumber('task');
+                Route::delete('/deleteTask/{task}', [TareasController::class, 'destroyCentral'])->whereNumber('task');
+            });
+        });
     });
-});
+}

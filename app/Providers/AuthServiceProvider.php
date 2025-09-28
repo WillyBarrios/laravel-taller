@@ -13,7 +13,7 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        //
+        \App\Models\Usuario::class => \App\Policies\UsuarioPolicy::class,
     ];
 
     /**
@@ -21,6 +21,6 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Las policies se registran automáticamente desde $policies
     }
 }

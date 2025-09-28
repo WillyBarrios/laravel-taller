@@ -86,15 +86,15 @@ class TareasController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show($tenant, Tareas $task)
     {
-        $tarea = Tareas::find($id);
-        if (!$tarea) {
-            return response()->json([
-                'message' => 'Tarea no encontrada',
-            ], 404);
-        }
-        return response()->json($tarea);
+        return response()->json($task);
+    }
+
+    // Version para contexto central (sin parámetro $tenant)
+    public function showCentral(Tareas $task)
+    {
+        return response()->json($task);
     }
 
     /**
@@ -108,11 +108,19 @@ class TareasController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update($tenant, Request $request, Tareas $task)
     {
-        $tarea = Tareas::findOrFail($id);
+        $dbName = \DB::connection()->getDatabaseName();
+        $estadoActualNormalizado = strtolower(trim((string)$task->estado));
+        \Log::info('Intento update tarea (tenant)', [
+            'id' => $task->id,
+            'estado_raw' => $task->estado,
+            'estado_normalizado' => $estadoActualNormalizado,
+            'db' => $dbName,
+            'tenant_id' => tenant() ? tenant('id') : null,
+        ]);
 
-        if ($tarea->estado !== 'pendiente') {
+        if ($estadoActualNormalizado !== 'pendiente') {
             return response()->json([
                 'message' => 'Solo las tareas pendientes pueden ser actualizadas.',
                 'status' => false
@@ -134,29 +142,106 @@ class TareasController extends Controller
             'usuario_id' => 'sometimes|required|integer|exists:usuarios,id',
             'fecha_vencimiento' => 'sometimes|nullable|date',
         ])->validate();
-        $tarea->update($validated);
+        $task->update($validated);
+
+        \Log::info('Update tarea success', [
+            'id' => $task->id,
+            'tenant_id' => tenant() ? tenant('id') : null,
+            'db' => $dbName,
+        ]);
 
         return response()->json([
             'message' => 'Tarea actualizada correctamente',
-            'status' => true
+            'status' => true,
+            'data' => [
+                'id' => $task->id,
+            ],
         ], 200);
-}
+    }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($tenant, Tareas $task)
     {
-        $tarea = Tareas::findOrFail($id);
-
-        if ($tarea->estado !== 'pendiente') {
+        $estadoActualNormalizado = strtolower(trim((string)$task->estado));
+        if ($estadoActualNormalizado !== 'pendiente') {
             return response()->json([
                 'message' => 'Solo las tareas pendientes pueden ser eliminadas.',
                 'status' => false
             ], 422);
         }
 
-        $tarea->delete();
+        $task->delete();
+
+        return response()->json([
+            'message' => 'Tarea eliminada correctamente',
+            'status' => true
+        ], 200);
+    }
+
+    // Version para contexto central (sin parámetro $tenant)
+    public function updateCentral(Request $request, Tareas $task)
+    {
+        $dbName = \DB::connection()->getDatabaseName();
+        $estadoActualNormalizado = strtolower(trim((string)$task->estado));
+        \Log::info('Intento update tarea (central)', [
+            'id' => $task->id,
+            'estado_raw' => $task->estado,
+            'estado_normalizado' => $estadoActualNormalizado,
+            'db' => $dbName,
+        ]);
+
+        if ($estadoActualNormalizado !== 'pendiente') {
+            return response()->json([
+                'message' => 'Solo las tareas pendientes pueden ser actualizadas.',
+                'status' => false
+            ], 422);
+        }
+
+        $payload = $request->all();
+        if (isset($payload['Fecha de vencimiento']) && !isset($payload['fecha_vencimiento'])) {
+            $payload['fecha_vencimiento'] = $payload['Fecha de vencimiento'];
+        }
+        if (isset($payload['estado'])) {
+            $payload['estado'] = strtolower($payload['estado']);
+        }
+
+        $validated = validator($payload, [
+            'nombre' => 'sometimes|required|string|max:150',
+            'descripcion' => 'sometimes|required|string|max:255',
+            'estado' => 'sometimes|required|string|in:pendiente,en_progreso,completada',
+            'usuario_id' => 'sometimes|required|integer|exists:usuarios,id',
+            'fecha_vencimiento' => 'sometimes|nullable|date',
+        ])->validate();
+
+        $task->update($validated);
+
+        \Log::info('Update tarea success (central)', [
+            'id' => $task->id,
+            'db' => $dbName,
+        ]);
+
+        return response()->json([
+            'message' => 'Tarea actualizada correctamente',
+            'status' => true,
+            'data' => [
+                'id' => $task->id,
+            ],
+        ], 200);
+    }
+
+    public function destroyCentral(Tareas $task)
+    {
+        $estadoActualNormalizado = strtolower(trim((string)$task->estado));
+        if ($estadoActualNormalizado !== 'pendiente') {
+            return response()->json([
+                'message' => 'Solo las tareas pendientes pueden ser eliminadas.',
+                'status' => false
+            ], 422);
+        }
+
+        $task->delete();
 
         return response()->json([
             'message' => 'Tarea eliminada correctamente',
