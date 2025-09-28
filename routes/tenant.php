@@ -31,6 +31,10 @@ Route::domain('{tenant}.localhost')->group(function () {
         Route::get('/', function () {
             return 'Tenant context OK. Current tenant id: ' . tenant('id');
         });
+        // SPA direct paths (tenant)
+        Route::view('/login', 'app');
+        // Fallback para cualquier ruta no api (en subdominio tenant)
+        Route::view('/{any}', 'app')->where('any', '^(?!api).*$');
     });
 
     // Tenant-scoped API using tenant database

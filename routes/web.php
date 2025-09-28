@@ -16,3 +16,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Ruta directa a /login para la SPA (central domains)
+Route::view('/login', 'app');
+
+// Fallback SPA para cualquier ruta no-API (central)
+Route::view('/{any}', 'app')->where('any', '^(?!api).*$');
+
