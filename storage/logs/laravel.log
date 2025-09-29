@@ -6026,3 +6026,11 @@
 #56 C:\\Dev\\laravel-taller\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\resources\\server.php(16): require_once('C:\\\\Dev\\\\laravel-...')
 #57 {main}
 "} 
+[2025-09-28 22:12:08] local.INFO: Update user attempt (tenant) {"user_id":1,"tenant_id":"tenant2","db":"tenant2"} 
+[2025-09-28 22:13:31] local.INFO: Update user attempt (tenant) {"user_id":1,"tenant_id":"tenant2","db":"tenant2"} 
+[2025-09-29 01:17:50] local.INFO: Intento update tarea (central) {"id":12,"estado_raw":"pendiente","estado_normalizado":"pendiente","db":"taller"} 
+[2025-09-29 01:17:50] local.INFO: Update tarea success (central) {"id":12,"db":"taller"} 
+[2025-09-29 01:18:05] local.INFO: Intento update tarea (tenant) {"id":7,"estado_raw":"pendiente","estado_normalizado":"pendiente","db":"tenant2","tenant_id":"tenant2"} 
+[2025-09-29 01:18:05] local.INFO: Update tarea success {"id":7,"tenant_id":"tenant2","db":"tenant2"} 
+[2025-09-29 01:18:15] local.INFO: Intento update tarea (tenant) {"id":7,"estado_raw":"pendiente","estado_normalizado":"pendiente","db":"tenant2","tenant_id":"tenant2"} 
+[2025-09-29 01:18:15] local.INFO: Update tarea success {"id":7,"tenant_id":"tenant2","db":"tenant2"} 
