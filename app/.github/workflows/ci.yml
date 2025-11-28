@@ -1,4 +1,4 @@
-name: test
+name: ci
 
 on:
   # Se ejecuta en cualquier PR cuya rama de destino sea main
