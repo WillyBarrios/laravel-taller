@@ -1,0 +1,64 @@
+name: ci
+
+on:
+  # Se ejecuta en cualquier PR cuya rama de destino sea main
+  pull_request:
+    branches: [ main ]
+
+  # Opcional pero recomendable: validar también cuando algo se mergea / pushea a main
+  push:
+    branches: [ main ]
+
+jobs:
+  backend:
+    name: Backend (Laravel)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          extensions: mbstring, intl, pcntl, bcmath, pdo, sqlite, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Copy .env
+        run: cp .env.example .env
+
+      - name: Generate app key
+        run: php artisan key:generate
+
+      # Si tus tests usan DB real, ajusta este paso (puedes usar SQLite in-memory o MySQL service)
+      - name: Run migrations
+        run: php artisan migrate --force
+
+      - name: Run backend tests
+        run: php artisan test
+
+  frontend:
+    name: Frontend (Vite)
+    runs-on: ubuntu-latest
+    needs: backend   # No corre frontend si backend ya falló
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
